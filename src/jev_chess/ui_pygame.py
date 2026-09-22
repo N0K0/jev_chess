@@ -478,8 +478,8 @@ class App:
         fy = WIN_H - 64
         pygame.draw.line(self.screen, (70, 70, 78), (PANEL_X - 10, fy - 8), (WIN_W, fy - 8))
         for line in (
-            "Space lock in / play • ◀ ▶ history • A auto-play",
-            "R ask again • X close detail • wheel scroll",
+            "Space play \u2022 \u25c0 \u25b6 history \u2022 A autoplay",
+            "R ask again \u2022 X close \u2022 scroll",
         ):
             self.screen.blit(self.small.render(line, True, DIM), (PANEL_X, fy))
             fy += 18
