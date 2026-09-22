@@ -115,3 +115,19 @@ def format_json_lines(obj, max_lines: int = 2000) -> list[str]:
     if len(lines) > max_lines:
         lines = lines[:max_lines] + [f"… ({len(lines) - max_lines} more lines)"]
     return lines
+
+
+def confidence_meter(conf: float | None) -> tuple[float, tuple[int, int, int]]:
+    """(fill fraction 0..1, bar color) for the confidence meter. Thresholds match confidence_text."""
+    if conf is None:
+        return 0.0, (100, 100, 105)
+    fraction = max(0.0, min(1.0, conf))
+    if conf >= 0.75:
+        color = (74, 160, 90)
+    elif conf >= 0.5:
+        color = (210, 170, 40)
+    elif conf >= 0.3:
+        color = (220, 130, 40)
+    else:
+        color = (200, 70, 70)
+    return fraction, color

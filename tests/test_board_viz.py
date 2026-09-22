@@ -1,5 +1,6 @@
 from jev_chess.board_viz import (
     arrow_style,
+    confidence_meter,
     confidence_text,
     format_json_lines,
     preview_usable,
@@ -55,6 +56,17 @@ def test_confidence_words():
     assert "very sure" in confidence_text(0.9)
     assert "guessing" in confidence_text(0.1)
     assert "not reported" in confidence_text(None)
+
+
+def test_confidence_meter_thresholds_match_words():
+    assert confidence_meter(None) == (0.0, (100, 100, 105))
+    frac, color = confidence_meter(0.9)
+    assert frac == 0.9 and color == (74, 160, 90)
+    assert confidence_meter(0.6)[1] == (210, 170, 40)
+    assert confidence_meter(0.4)[1] == (220, 130, 40)
+    assert confidence_meter(0.1)[1] == (200, 70, 70)
+    assert confidence_meter(1.5)[0] == 1.0
+    assert confidence_meter(-0.2)[0] == 0.0
 
 
 def test_preview_usable():

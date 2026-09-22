@@ -246,6 +246,18 @@ class App:
         else:
             self.do_engine()
 
+    def draw_confidence_bar(self, y: int, conf: float | None) -> int:
+        """Visual confidence meter: track + fill + % label. Returns the next y."""
+        from jev_chess.board_viz import confidence_meter
+
+        frac, color = confidence_meter(conf)
+        pygame.draw.rect(self.screen, (60, 60, 66), (PANEL_X, y + 3, 240, 14), border_radius=7)
+        if frac > 0:
+            pygame.draw.rect(self.screen, color, (PANEL_X, y + 3, max(14, int(240 * frac)), 14), border_radius=7)
+        label = "not reported" if conf is None else f"{conf:.0%} sure"
+        self.screen.blit(self.small.render(label, True, DIM), (PANEL_X + 248, y))
+        return y + 22
+
     def viewed_board(self) -> chess.Board:
         cur = self.game.history.current()
         if cur is None:
@@ -409,6 +421,7 @@ class App:
             ):
                 self.screen.blit(self.small.render(line, True, DIM), (PANEL_X, y))
                 y += 19
+            y = self.draw_confidence_bar(y, cur.jev_confidence)
         if self.has_preview() and self.viewed_is_tip(board):
             d = self.preview_dist
             for line in wrap(
@@ -419,6 +432,7 @@ class App:
             ):
                 self.screen.blit(self.small.render(line, True, (180, 230, 180)), (PANEL_X, y))
                 y += 19
+            y = self.draw_confidence_bar(y, d.confidence)
             self.ask_rect = pygame.Rect(PANEL_X, y, 200, 26)
             pygame.draw.rect(self.screen, BTN, self.ask_rect, border_radius=6)
             img = self.small.render("Ask Jev again (R)", True, TEXT)
