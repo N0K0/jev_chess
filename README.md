@@ -1,5 +1,7 @@
 # Jev Chess
 
+> LLM slop disclaimer: this repo was written almost entirely by AI coding agents under loose human supervision. Expect over-engineering, uneven polish, and the occasional confident bad decision. The chess is honest; the code review was not.
+
 Jev (White, via [TypeSafe](https://docs.typesafe.ai)) plays chess against Stockfish (Black, via `python-chess`) in a step-through pygame UI. Watch what Jev is thinking *before* it moves: its candidate moves appear as probability arrows on the board.
 
 ![Jev weighing up its opening move, arrows sized by probability](docs/01-preview.png)
