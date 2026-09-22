@@ -10,10 +10,17 @@ import chess
 
 
 MOVE_INSTRUCTIONS = (
-    "Select the best chess move for the side to move given this position. "
-    "Prefer legal, principled moves: develop pieces, control the center, "
-    "keep the king safe, avoid hanging pieces. Answer with exactly one of the listed options."
+    "Select the move that leads to the best overall future for the side to move, "
+    "not just the best-looking move right now. For each option, weigh what happens "
+    "after it: the resulting position, the opponent's likely replies, and whether "
+    "the landing square is under attack (flagged per option). Prefer moves that keep "
+    "the king safe afterwards, develop pieces, control the center, win material safely, "
+    "and create threats the opponent must answer. Avoid moves whose only merit is "
+    "immediate but allow a strong reply, and avoid hanging pieces on undefended squares. "
+    "Answer with exactly one of the listed options."
 )
+
+PIECE_VALUES = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
 
 
 def describe_move(board: chess.Board, move: chess.Move) -> str:
@@ -22,15 +29,30 @@ def describe_move(board: chess.Board, move: chess.Move) -> str:
     name = piece.symbol().upper() if piece else "?"
     descr = f"{san}: {name} {chess.square_name(move.from_square)} to {chess.square_name(move.to_square)}"
     if board.is_capture(move):
-        descr += ", capture"
+        if board.is_en_passant(move):
+            descr += ", captures en passant (1 pt)"
+        else:
+            captured = board.piece_at(move.to_square)
+            value = PIECE_VALUES.get(captured.piece_type, 0) if captured else 0
+            label = chess.piece_name(captured.piece_type) if captured else "piece"
+            descr += f", captures {label} ({value} pt)"
     if move.promotion:
         descr += f", promote to {chess.piece_name(move.promotion)}"
     if board.gives_check(move):
         descr += ", gives check"
     if board.is_castling(move):
-        descr += ", castles"
+        descr += ", castles (king to safety)"
     if board.is_en_passant(move):
         descr += ", en passant"
+    enemy = not board.turn
+    attackers = len(board.attackers(enemy, move.to_square))
+    defenders = len(board.attackers(board.turn, move.to_square))
+    if attackers == 0:
+        descr += ", lands on a safe square"
+    elif defenders == 0:
+        descr += f", lands under attack by {attackers} (undefended: could hang)"
+    else:
+        descr += f", lands under attack by {attackers} (defended by {defenders})"
     return descr
 
 
