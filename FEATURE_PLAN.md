@@ -12,7 +12,11 @@ Simple bot where **Jev (White)** plays against a **python-chess engine (Black, S
 2. **Jev mover (`typesafe-sdk`, `TypeSafeClient.system_one`)**
    - Jev is System One: no free-text generation, only `Choice` over supplied options.
    - `state` (JSON object per `concepts/state.md`):
-     `{fen, turn, is_check, last_move, board_ascii, legal_moves: [{uci, san, descr}]}`
+     `{moves_san, movetext, turn, is_check, last_move, board_ascii, legal_moves: [{uci, san, descr}]}`.
+     No FEN: Jev gets readable notation instead; each option's `descr` carries
+     code-computed consequence flags (capture values, check, castling, landing-square
+     danger as attackers vs defenders) and the instructions ask for the move with the
+     best overall future given likely replies.
    - `questions = {"move": Choice(instructions=..., criteria={uci: descr})}`.
      Instructions carry full meaning; criteria keys are UCI, values are human-readable (`"Nf3: Knight g1 to f3"` + capture/check flags).
    - Legal moves ~20-40, under 255-option Choice limit.

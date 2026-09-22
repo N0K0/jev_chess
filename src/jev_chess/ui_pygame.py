@@ -474,7 +474,23 @@ class App:
             max_scroll = max(0, len(lines) - count)
             self.detail_scroll = max(0, min(self.detail_scroll, max_scroll))
             mono = pygame.font.SysFont("dejavusansmono", 12)
-            for line in lines[self.detail_scroll: self.detail_scroll + count]:
+            wrapped: list[str] = []
+            for line in lines:
+                cur = ""
+                for w in line.split(" "):
+                    trial = f"{cur} {w}".strip()
+                    if mono.size(trial)[0] <= 348:
+                        cur = trial
+                    else:
+                        if cur:
+                            wrapped.append(cur)
+                        cur = w if mono.size(w)[0] <= 348 else w[:60]
+                if cur:
+                    wrapped.append(cur)
+            self.detail_lines = wrapped
+            max_scroll = max(0, len(wrapped) - count)
+            self.detail_scroll = max(0, min(self.detail_scroll, max_scroll))
+            for line in wrapped[self.detail_scroll: self.detail_scroll + count]:
                 img = mono.render(line[:90], True, (210, 220, 235))
                 self.screen.blit(img, (PANEL_X + 4, y))
                 y += per
@@ -626,10 +642,11 @@ class App:
                 self.draw_arrows(self.preview_dist.probs)
             elif self.show_arrows and cur is not None and cur.side == "white" and cur.jev_probs:
                 self.draw_arrows(cur.jev_probs)
+            self.draw_panel(board)
+            # Buttons last: draw_panel paints the panel background over this area.
             self.btn_back.draw(self.screen, self.small)
             self.btn_next.draw(self.screen, self.small)
             self.btn_fwd.draw(self.screen, self.small)
-            self.draw_panel(board)
             pygame.display.flip()
 
 
