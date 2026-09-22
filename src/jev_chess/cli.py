@@ -22,9 +22,12 @@ def top_lines(probs: dict[str, float], n: int = 5) -> list[str]:
 
 
 def render(board: chess.Board, note: str = "") -> None:
+    from jev_chess.jev_player import move_notation
+
     print()
     print(board)
-    print(f"FEN: {board.fen()}")
+    _, movetext = move_notation(board)
+    print(f"Moves: {movetext or '(none yet)'}")
     if board.is_check():
         print("Check!")
     if note:

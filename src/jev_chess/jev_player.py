@@ -34,10 +34,27 @@ def describe_move(board: chess.Board, move: chess.Move) -> str:
     return descr
 
 
+def move_notation(board: chess.Board) -> tuple[list[str], str]:
+    """SAN list and movetext (e.g. '1. e4 e5') for all moves played so far."""
+    replay = chess.Board()
+    sans: list[str] = []
+    for m in board.move_stack:
+        sans.append(replay.san(m))
+        replay.push(m)
+    parts = []
+    for i in range(0, len(sans), 2):
+        n = i // 2 + 1
+        white, black = sans[i], sans[i + 1] if i + 1 < len(sans) else ""
+        parts.append(f"{n}. {white} {black}".rstrip())
+    return sans, " ".join(parts)
+
+
 def build_state(board: chess.Board) -> dict:
     legal = list(board.legal_moves)
+    moves_san, movetext = move_notation(board)
     return {
-        "fen": board.fen(),
+        "moves_san": moves_san,
+        "movetext": movetext,
         "turn": "white" if board.turn == chess.WHITE else "black",
         "is_check": board.is_check(),
         "last_move": board.peek().uci() if board.move_stack else None,
