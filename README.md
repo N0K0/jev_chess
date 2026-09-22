@@ -12,15 +12,41 @@ Jev (White, via [TypeSafe](https://docs.typesafe.ai)) plays chess against Stockf
 
 ## How it works
 
-Jev is a System One model: it cannot generate moves, it can only pick from options you give it. Each Jev turn (`src/jev_chess/jev_player.py:120`):
+Jev is a System One model: it picks from options instead of generating text. Each Jev turn sends one `Choice` request and gets back a probability distribution over the legal moves.
 
-1. The board is encoded as a JSON `state` (`src/jev_chess/jev_player.py:74`): `moves_san`, `movetext` (e.g. `"1. e4 e5"`), `turn`, `is_check`, `last_move` (UCI or `None`), `board_ascii`, and `legal_moves` (`[{uci, san, descr}]`).
-2. Each legal move gets a human-readable criterion string (`src/jev_chess/jev_player.py:26`): `"Nf3: Knight g1 to f3"` plus consequence flags — capture (with piece value), promotion, check, castling, en passant, and whether the landing square is safe / defended / hanging.
-3. One `Choice` question (`questions = {"move": {instructions, criteria}}`, UCI keys) asks Jev to pick the best move. The answer is a full probability distribution over the legal moves, plus confidence and token usage.
-4. The distribution is fetched automatically right after Stockfish moves and at game start (one API call, cached per-FEN in `App.preview_fen` / `preview_dist`, `src/jev_chess/ui_pygame.py:148`) and drawn as arrows on the current board. History frames keep stored distributions for hindsight.
-5. Pressing Space **locks the move in** by sampling the cached distribution with the current temperature (`Game.play_white_from_distribution`, `src/jev_chess/game.py:83`) — no second API call. The cache is valid only for the exact FEN it was fetched for (`preview_usable`, `src/jev_chess/board_viz.py:68`).
+State sent (`build_state`, `src/jev_chess/jev_player.py:74`):
 
-Temperature (`src/jev_chess/sampling.py:15`): `0` always takes Jev's favourite (argmax, deterministic sorted tiebreak), `1` samples the raw distribution, `<1` sharpens, `>1` flattens (`p_T(i) ∝ p_i^(1/T)`, renormalized; `p=0` stays 0). Seeded via `random.Random(seed)` for determinism. If Jev returns an illegal/unknown UCI, `resolve_uci` (`src/jev_chess/jev_player.py:182`) falls back to the highest-probability legal move.
+```json
+{
+  "moves_san": ["e4", "e5"],
+  "movetext": "1. e4 e5",
+  "turn": "white",
+  "is_check": false,
+  "last_move": "e7e5",
+  "board_ascii": "r n b q k b n r\np p p p . p p p\n. . . . . . . .\n. . . . p . . .\n. . . . P . . .\n. . . . . N . .\nP P P P . P P P\nR N B Q K B . R",
+  "legal_moves": [
+    {"uci": "g1f3", "san": "Nf3", "descr": "Nf3: N g1 to f3, lands on a safe square"}
+  ]
+}
+```
+
+Question sent (`questions = {"move": {instructions, criteria}}`):
+
+```json
+{
+  "move": {
+    "instructions": "Select the move that leads to the best overall future for the side to move...",
+    "criteria": {
+      "g1f3": "Nf3: N g1 to f3, lands on a safe square",
+      "d2d4": "d4: P d2 to d4, lands under attack by 2 (defended by 1)"
+    }
+  }
+}
+```
+
+Options are keyed by UCI. Each description carries code-computed consequence flags (`describe_move`, `src/jev_chess/jev_player.py:26`): capture with piece value, promotion, check, castling, en passant, and landing-square danger as attackers vs defenders. The answer returns `choice`, `probabilities`, `confidence`, and token usage.
+
+Flow: the distribution is fetched automatically after Stockfish moves (one call, cached per position; `preview_usable`, `src/jev_chess/board_viz.py:68`) and drawn as arrows. Space samples the cache with the current temperature and locks the move in (`Game.play_white_from_distribution`, `src/jev_chess/game.py:83`), so no second call. Temperature (`src/jev_chess/sampling.py:15`): 0 takes the favourite, 1 samples the raw distribution, higher flattens (`p_T(i) ∝ p_i^(1/T)`). Unknown UCIs fall back to the highest-probability legal move (`resolve_uci`).
 
 ## Requirements
 
