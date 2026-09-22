@@ -31,6 +31,8 @@ def test_top_k_controls_count():
     assert len(probs_to_arrows(probs, top_k=3, min_p=0.01)) == 3
     assert len(probs_to_arrows(probs, top_k=5, min_p=0.01)) == 5
     assert len(probs_to_arrows(probs, top_k=8, min_p=0.01)) == 8
+    assert len(probs_to_arrows(probs, top_k=None, min_p=0.0)) == 9
+    assert len(probs_to_arrows(probs, top_k=None, min_p=0.05)) == 6
 
 
 def test_arrow_style_monotonic():

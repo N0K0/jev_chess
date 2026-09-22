@@ -22,13 +22,13 @@ class ArrowViz:
 
 
 def probs_to_arrows(
-    probs: dict[str, float], top_k: int = 5, min_p: float = 0.05
+    probs: dict[str, float], top_k: int | None = 5, min_p: float = 0.05
 ) -> list[ArrowViz]:
-    """Top-K moves with prob >= min_p, ranked. Invalid UCIs are skipped."""
+    """Top-K moves with prob >= min_p, ranked. top_k=None means no limit. Invalid UCIs are skipped."""
     ranked = sorted(probs.items(), key=lambda kv: kv[1], reverse=True)
     out: list[ArrowViz] = []
     for uci, p in ranked:
-        if len(out) >= top_k or p < min_p:
+        if (top_k is not None and len(out) >= top_k) or p < min_p:
             break
         try:
             move = chess.Move.from_uci(uci)

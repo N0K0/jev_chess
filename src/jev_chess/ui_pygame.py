@@ -53,7 +53,11 @@ GLYPHS = {
 }
 TEMP_PRESETS = [("Solid", 0.0), ("Balanced", 1.0), ("Adventurous", 1.5)]
 SPEEDS = [0.5, 1.0, 2.0]
-TOP_KS = [3, 5, 8]
+TOP_KS: list[int | None] = [3, 5, 8, None]  # None = show all moves
+
+
+def topk_label(top_k: int | None) -> str:
+    return "Show all" if top_k is None else f"Show top {top_k}"
 
 
 def sq_xy(sq: int) -> tuple[int, int]:
@@ -297,7 +301,8 @@ class App:
             self.screen.blit(c, (12, 12 + i * SQ + 4))
 
     def draw_arrows(self, probs: dict[str, float]):
-        arrows = probs_to_arrows(probs, top_k=TOP_KS[self.top_k_idx], min_p=0.01)
+        top_k = TOP_KS[self.top_k_idx]
+        arrows = probs_to_arrows(probs, top_k=top_k, min_p=0.0 if top_k is None else 0.01)
         if not arrows:
             return
         overlay = pygame.Surface((BOARD_PX + 20, BOARD_PX + 20), pygame.SRCALPHA)
@@ -388,7 +393,7 @@ class App:
         self.screen.blit(img, img.get_rect(center=self.arrow_rect.center))
         self.topk_rect = pygame.Rect(PANEL_X + 210, y, 150, 28)
         pygame.draw.rect(self.screen, BTN, self.topk_rect, border_radius=6)
-        img = self.small.render(f"Show top {TOP_KS[self.top_k_idx]}", True, TEXT)
+        img = self.small.render(topk_label(TOP_KS[self.top_k_idx]), True, TEXT)
         self.screen.blit(img, img.get_rect(center=self.topk_rect.center))
         y += 34
         # message + stats
